@@ -29,16 +29,15 @@ public class UsuarioService {
         return usuarioRepository.save(usuario);
     }
 
-    public Usuario login(String username, String password) {
+    public boolean autenticar(String username, String password) {
 
         Usuario usuario = usuarioRepository.findByUsername(username);
 
         if (usuario != null &&
                 BCrypt.checkpw(password, usuario.getPassword())) {
-
-            return usuario;
+            return true;
         }
 
-        return null;
+        return false;
     }
 }
