@@ -6,6 +6,8 @@ import org.springframework.stereotype.Service;
 import com.krakedev.jwt.entidades.Usuario;
 import com.krakedev.jwt.repositories.UsuarioRepository;
 
+import org.mindrot.jbcrypt.BCrypt;
+
 @Service
 public class UsuarioService {
 
@@ -17,15 +19,23 @@ public class UsuarioService {
 
     public Usuario registrar(Usuario usuario) {
 
-        return usuarioRepository.save(usuario);
+        String passwordHash = BCrypt.hashpw(
+                usuario.getPassword(),
+                BCrypt.gensalt()
+        );
 
+        usuario.setPassword(passwordHash);
+
+        return usuarioRepository.save(usuario);
     }
 
     public Usuario login(String username, String password) {
 
         Usuario usuario = usuarioRepository.findByUsername(username);
 
-        if (usuario != null && usuario.getPassword().equals(password)) {
+        if (usuario != null &&
+                BCrypt.checkpw(password, usuario.getPassword())) {
+
             return usuario;
         }
 
