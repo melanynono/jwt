@@ -1,4 +1,3 @@
-
 package com.krakedev.jwt.controllers;
 
 import java.util.Map;
@@ -12,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.krakedev.jwt.entidades.Usuario;
 import com.krakedev.jwt.services.UsuarioService;
+import com.krakedev.jwt.utils.JwtUtil;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -25,7 +25,6 @@ public class AuthController {
 
     @PostMapping("/registrar")
     public ResponseEntity<?> registrar(@RequestBody Usuario usuario) {
-
         try {
             Usuario usuarioGuardado = usuarioService.registrar(usuario);
 
@@ -44,24 +43,29 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Usuario usuario) {
+    public ResponseEntity<?> login(@RequestBody Map<String, String> datos) {
 
-        Usuario usuarioAutenticado = usuarioService.login(
-                usuario.getUsername(),
-                usuario.getPassword()
-        );
+        String username = datos.get("username");
+        String password = datos.get("password");
 
-        if (usuarioAutenticado != null) {
-            return ResponseEntity.ok(
-                Map.of(
-                    "mensaje", "Inicio de sesión exitoso",
-                    "username", usuarioAutenticado.getUsername(),
-                    "rol", usuarioAutenticado.getRol()
-                )
-            );
+        Usuario usuario = usuarioService.login(username, password);
+
+        if (usuario == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Credenciales incorrectas");
         }
 
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body("Usuario o contraseña incorrectos");
+        String token = JwtUtil.generarToken(
+                usuario.getUsername(),
+                usuario.getRol()
+        );
+
+        return ResponseEntity.ok(
+            Map.of(
+                "token", token,
+                "username", usuario.getUsername(),
+                "rol", usuario.getRol()
+            )
+        );
     }
 }
